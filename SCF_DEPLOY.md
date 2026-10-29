@@ -12,7 +12,7 @@ Set-Location overstats-scf
 git pull --ff-only origin main
 $revision = git rev-parse --short HEAD
 $image = "<registry>/<namespace>/<image>:main-$revision"
-docker build --platform linux/amd64 -t $image .
+docker build --platform linux/amd64 -f Dockerfile.scf -t $image .
 docker push $image
 python -m pip install tencentcloud-sdk-python-scf
 python .\update_scf_images.py --region <region> --names <function-name> --image $image
