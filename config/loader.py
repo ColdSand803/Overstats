@@ -169,8 +169,8 @@ def is_database_write_enabled() -> bool:
 
 def get_api_config() -> APIConfig:
     return APIConfig(
-        host=os.getenv("OVERSTATS_API_HOST", config.API_HOST),
-        port=int(os.getenv("OVERSTATS_API_PORT", str(config.API_PORT))),
+        host=config.API_HOST,
+        port=int(config.API_PORT),
         use_stream_response=_read_bool_env(
             "OVERSTATS_USE_STREAM_RESPONSE",
             config.USE_STREAM_RESPONSE,

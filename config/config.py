@@ -88,6 +88,10 @@ _DEFAULT_PERSONA_PROMPT = """
 
 def _get_raw(json_cfg: Dict[str, Any], key: str, default: Any = None) -> Any:
     """获取原始配置值：优先查找 os.environ (KEY 或 OVERSTATS_KEY)，然后查找 json_cfg，最后返回 default。"""
+    if key == "API_PORT" and "PORT" in os.environ:
+        return os.environ["PORT"]
+    if key == "API_HOST" and "HOST" in os.environ:
+        return os.environ["HOST"]
     if key in os.environ:
         return os.environ[key]
     overstats_key = f"OVERSTATS_{key}"
