@@ -159,6 +159,16 @@ def start_query_tool_asset_warmup(config: Dict[str, Any]) -> threading.Event:
     stop = threading.Event()
     if os.environ.get("OVERSTATS_SCF_FROZEN_QUERY_TOOL") == "1":
         return stop
+    if os.environ.get("OVERSTATS_DISABLE_ASSET_WARMUP") == "1":
+        print("[overstats] background asset warmup disabled via environment")
+        return stop
+    try:
+        from config import config as app_cfg
+        if not getattr(app_cfg, "ENABLE_ASSET_WARMUP", True):
+            print("[overstats] background asset warmup disabled (ENABLE_ASSET_WARMUP=False)")
+            return stop
+    except Exception:
+        pass
 
     def run() -> None:
         try:
@@ -170,7 +180,7 @@ def start_query_tool_asset_warmup(config: Dict[str, Any]) -> threading.Event:
 
             def worker() -> None:
                 try:
-                    with httpx.Client(headers=REMOTE_HEADERS, timeout=20.0, follow_redirects=True) as client:
+                    with httpx.Client(headers=REMOTE_HEADERS, timeout=20.0, follow_redirects=True, trust_env=False) as client:
                         while not stop.is_set():
                             with lock:
                                 item = next(pending, None)
@@ -328,7 +338,7 @@ def ensure_query_tool_assets(config: Dict[str, Any] | None = None) -> Dict[str, 
 
 
 def _download_asset_job(url: str, category: str) -> Path:
-    with httpx.Client(headers=REMOTE_HEADERS, timeout=20.0, follow_redirects=True) as client:
+    with httpx.Client(headers=REMOTE_HEADERS, timeout=20.0, follow_redirects=True, trust_env=False) as client:
         return _download_asset(client, url, category)
 
 
@@ -363,7 +373,19 @@ class QueryToolModule:
                 return _CONFIG_CACHE
 
             local_config = read_query_tool(default={})
-            remote_config = _run_async_sync(self.requests.fetch_remote_query_tool)
+            try:
+                remote_config = _run_async_sync(self.requests.fetch_remote_query_tool)
+            except Exception as exc:
+                if local_config:
+                    print(
+                        f"[overstats] warning: failed to fetch remote query_tool ({exc}), "
+                        "falling back to local query_tool.json"
+                    )
+                    merged_config = normalize_query_tool_config(local_config)
+                    _CONFIG_CACHE = merged_config
+                    _CONFIG_UPDATED = True
+                    return merged_config
+                raise
             merged_config = dict(local_config)
             merged_config.update(remote_config)
 

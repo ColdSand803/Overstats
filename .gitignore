@@ -5,9 +5,13 @@ AGENTS.md
 *.pyc
 __pycache__/
 
-# Environment variables
+# Configuration and environment files
 .env
-
+.env.*
+!.env.example
+config.json
+config/config.json
+config.local.json
 # Database files (optional, if generated locally)
 *.db
 *.sqlite3
@@ -57,3 +61,8 @@ res/query_tool.runtime.json
 # Optional guess media packs
 /res/ow_guess/packs/
 /res/ow_guess/dist/
+
+# Virtual environments
+.venv/
+venv/
+env/

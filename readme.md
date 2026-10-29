@@ -47,10 +47,12 @@ pip install -r requirements.txt
 ```
 
 ## 配置说明
+本地运行配置支持通过 **`.env`**（推荐）或 **`config.json`** 进行配置，无需在代码中写死凭据。
+可直接复制根目录的模板文件开始配置：
+- `.env` 方式：`cp .env.example .env`（推荐，支持单账号快捷配置与多账号 JSON 数组）
+- `config.json` 方式：`cp config.example.json config.json`
 
-当前本地运行配置集中在 `overstats/config/config.py`。
-
-其中最重要的是 `DASHEN_ACCOUNTS`：
+其中最关键的凭据是大神账号 `DASHEN_ACCOUNTS`（或在 `.env` 中使用 `DASHEN_ROLE_ID` 和 `DASHEN_TOKEN`）：
 
 ```python
 DASHEN_DTS = 2026

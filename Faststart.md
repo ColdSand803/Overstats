@@ -3,18 +3,19 @@
 本文档用于说明如何为 `overstats` 准备最基本的大神凭据配置。
 
 ## 概览
+`overstats` 至少需要配置一个网易大神账号。你可以使用 **`.env`**（推荐）或 **`config.json`**：
 
-`overstats` 至少需要在 [`overstats/config/config.py`](./config/config.py) 中配置一个大神账号：
-
-```python
-DASHEN_ACCOUNTS = [
-    {
-        "name": "primary",
-        "role_id": 123456789,
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    }
-]
+方式一（推荐）：复制根目录 `.env.example` 为 `.env`
+```bash
+cp .env.example .env
 ```
+然后在 `.env` 中填写：
+```env
+DASHEN_ROLE_ID=123456789
+DASHEN_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+方式二：复制根目录 `config.example.json` 为 `config.json` 并在其中填入账号信息。
 
 开始之前，请先明确这两个字段的含义：
 
@@ -155,22 +156,33 @@ DASHEN_ACCOUNTS = [
 
 其中 `result.token` 就是你需要填入 `config.py` 的 `token`。
 
-## 第四步：填写 `config.py`
+## 第四步：配置凭据
 
-拿到 `role_id` 和 `token` 之后，更新 [`overstats/config/config.py`](./config/config.py)：
+拿到 `role_id` 和 `token` 之后，将它们填入本地的 `.env` 或 `config.json` 中（无需修改任何 Python 代码文件）：
 
-```python
-DASHEN_ACCOUNTS = [
-    {
-        "name": "primary",
-        "role_id": 123456789,
-        "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-    }
-]
+### 方式一：使用 `.env`（推荐）
+在项目根目录复制 `.env.example` 为 `.env`：
+```env
+DASHEN_ROLE_ID=你的role_id
+DASHEN_TOKEN=你的token
+DASHEN_ACCOUNT_NAME=primary
 ```
+如需多账号，可以在 `.env` 中配置 `DASHEN_ACCOUNTS`（JSON 字符串格式）。
 
-如果你希望配置多个备用账号，也可以继续往 `DASHEN_ACCOUNTS` 里追加。
-
+### 方式二：使用 `config.json`
+在项目根目录复制 `config.example.json` 为 `config.json`：
+```json
+{
+  "DASHEN_ACCOUNTS": [
+    {
+      "name": "primary",
+      "role_id": 123456789,
+      "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  ]
+}
+```
+两个配置文件均已被 `.gitignore` 忽略，安全不会误提交到 Git。
 ## 安全说明
 
 以下内容都属于敏感信息：

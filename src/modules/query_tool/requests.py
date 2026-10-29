@@ -35,7 +35,7 @@ REMOTE_TOOL_EXCLUDED_KEYS = set(MANUAL_KEYS) | set(REMOTE_SECTION_SOURCES)
 
 class QueryToolRequests:
     async def fetch_remote_query_tool(self) -> Dict[str, Any]:
-        async with httpx.AsyncClient(headers=REMOTE_HEADERS, timeout=REMOTE_TIMEOUT) as client:
+        async with httpx.AsyncClient(headers=REMOTE_HEADERS, timeout=REMOTE_TIMEOUT, trust_env=False) as client:
             merged: Dict[str, Any] = {}
             failures = []
             try:

@@ -847,6 +847,7 @@ def _build_async_client(proxy_url: Optional[str] = None) -> httpx.AsyncClient:
         "timeout": HTTP_TIMEOUT,
         "limits": HTTP_LIMITS,
         "headers": _default_client_headers(),
+        "trust_env": False,
     }
     if not proxy_url:
         return httpx.AsyncClient(**client_kwargs)
