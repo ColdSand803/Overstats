@@ -13,7 +13,8 @@ def main() -> None:
     server = create_server(config)
     print(
         f"[overstats] serving on http://{config.host}:{config.port} "
-        f"(default_stream={config.use_stream_response})"
+        f"(default_stream={config.use_stream_response}, "
+        f"access_secret={'configured' if config.access_secret else 'not configured'})"
     )
     try:
         server.serve_forever()

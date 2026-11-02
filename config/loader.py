@@ -77,7 +77,8 @@ class APIConfig:
     enable_database_write: bool
     dashen_max_concurrent_requests: int
     dashen_max_accepted_requests: int = 4
-
+    # Empty means the service stays open, matching deployments that predate auth.
+    access_secret: str = ""
 
 @dataclass(frozen=True)
 class DashenCredentialConfig:
@@ -166,7 +167,6 @@ def is_database_write_enabled() -> bool:
         getattr(config, "ENABLE_DATABASE_WRITE", True),
     )
 
-
 def get_api_config() -> APIConfig:
     return APIConfig(
         host=config.API_HOST,
@@ -191,6 +191,7 @@ def get_api_config() -> APIConfig:
                 ),
             ),
         ),
+        access_secret=str(getattr(config, "ACCESS_SECRET", "") or ""),
     )
 
 

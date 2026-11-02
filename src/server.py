@@ -69,6 +69,7 @@ try:
     )
     from overstats.src.modules.auto_route import auto_route_module
     from overstats.src.http_server import resolve_http_ui_asset
+    from overstats.src.http_server.auth import PUBLIC_PATHS, is_authorized, unauthorized_body
 except ModuleNotFoundError:
     from config import APIConfig
     from src.client.apiclient import dashen_api_client
@@ -128,6 +129,7 @@ except ModuleNotFoundError:
     )
     from src.modules.auto_route import auto_route_module
     from src.http_server import resolve_http_ui_asset
+    from src.http_server.auth import PUBLIC_PATHS, is_authorized, unauthorized_body
 
 
 def _coerce_bool(value: object, default: bool) -> bool:
@@ -1979,7 +1981,28 @@ def create_server(config: APIConfig) -> ThreadingHTTPServer:
             normalized = normalize_request_metric_url(self.path)
             return normalized.rstrip("/") or "/"
 
+        def _reject_if_unauthorized(self) -> bool:
+            """Answer 401 and report True unless the caller proved the secret."""
+            if not config.access_secret:
+                return False
+            if self._request_path() in PUBLIC_PATHS:
+                return False
+            if is_authorized(self.headers.get("Authorization"), config.access_secret):
+                return False
+            body = unauthorized_body()
+            self.send_response(HTTPStatus.UNAUTHORIZED)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.send_header("WWW-Authenticate", 'Basic realm="Overstats", charset="UTF-8"')
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(body)
+            self.wfile.flush()
+            return True
+
         def do_GET(self) -> None:
+            if self._reject_if_unauthorized():
+                return
             path = self._request_path()
             self._set_metrics_context(path if path.startswith("/api/v2/") else None)
             if path == "/healthz":
@@ -2009,6 +2032,8 @@ def create_server(config: APIConfig) -> ThreadingHTTPServer:
             )
 
         def do_POST(self) -> None:
+            if self._reject_if_unauthorized():
+                return
             path = self._request_path()
             self._set_metrics_context(path if path.startswith("/api/v2/") else None)
             if path == "/api/v2/auto-route":
@@ -4765,6 +4790,22 @@ def create_server(config: APIConfig) -> ThreadingHTTPServer:
             self.wfile.write(data)
             self.wfile.write(b"\r\n")
             self.wfile.flush()
+
+        def do_HEAD(self) -> None:
+            # Same gate as GET; otherwise HEAD would confirm that protected paths exist.
+            if self._reject_if_unauthorized():
+                return
+            self.send_error(HTTPStatus.NOT_IMPLEMENTED)
+
+        def _unsupported(self) -> None:
+            if self._reject_if_unauthorized():
+                return
+            self.send_error(HTTPStatus.METHOD_NOT_ALLOWED)
+
+        do_PUT = _unsupported
+        do_DELETE = _unsupported
+        do_PATCH = _unsupported
+        do_OPTIONS = _unsupported
 
     server = ThreadingHTTPServer((config.host, config.port), OverstatsRequestHandler)
     asset_warmup_stop = start_query_tool_asset_warmup(query_tool_config)

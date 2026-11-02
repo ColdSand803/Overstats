@@ -36,6 +36,28 @@ JSON 返回 `data_source: "mini_program"`、`season.scope: "total"`；小时数�
 }
 ```
 
+## 访问鉴权
+
+服务持有上游账号凭据，配置访问密钥后，除 `GET /healthz` 外的所有接口和控制面板都需要它。未配置时不鉴权，行为与之前一致；对公网开放时务必配置。
+
+密钥从环境变量 `OVERSTATS_ACCESS_SECRET` 读取，也可以写在 `config.json` 的 `ACCESS_SECRET` 字段里。两种方式携带同一个密钥：
+
+- API 调用：请求头 `Authorization: Bearer <密钥>`。
+- 浏览器：打开控制面板时会弹出登录框，密码填密钥，用户名随意。浏览器会记住这次登录，页面里的请求自动带上。
+
+密钥错误或缺失时返回 `401`，响应头带 `WWW-Authenticate`：
+
+```json
+{
+  "ok": false,
+  "error": "unauthorized",
+  "message": "This service requires an access secret.",
+  "hint": "Send Authorization: Bearer <secret>, or sign in when the browser asks."
+}
+```
+
+密钥不会出现在日志里。更换密钥后，已经打开的浏览器需要重新登录。
+
 ## OW Shop API
 
 Endpoints:

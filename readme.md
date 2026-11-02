@@ -98,7 +98,6 @@ python -m overstats.run
 cd overstats
 python run.py
 ```
-
 默认监听地址：
 
 - `http://127.0.0.1:18080`
@@ -108,6 +107,23 @@ python run.py
 - `http://127.0.0.1:18080/`
 - 启动服务后，可直接用浏览器访问根路径进入网页控制面板，在左侧选择模块并在右侧查看 JSON、图片和回复预览。
 
+健康检查：
+
+```bash
+curl http://127.0.0.1:18080/healthz
+```
+
+## 访问鉴权
+
+服务持有大神账号凭据，对公网开放时必须配置访问密钥。配置 `OVERSTATS_ACCESS_SECRET`（或 `config.json` 的 `ACCESS_SECRET`）后，除健康检查外的所有接口和控制面板都需要它；留空则不鉴权。
+
+```bash
+curl -H "Authorization: Bearer <密钥>" http://127.0.0.1:18080/api/v2/dashen-profile
+```
+
+浏览器打开控制面板时会弹出登录框，密码填同一个密钥，用户名随意。密钥错误返回 `401`。
+
+## 主要 API 端点
 健康检查：
 
 ```bash

@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 
 _CONFIG_DIR = Path(__file__).resolve().parent
 _PROJECT_ROOT = _CONFIG_DIR.parent
-
+from typing import Any, Dict, List, Optional, Tuple
 
 def _load_env_file(env_path: Path) -> None:
     """加载 .env 文件中的键值对到 os.environ 中（不覆盖已存在的环境变量）。"""
@@ -217,6 +217,23 @@ def _resolve_netease_proxies(json_cfg: Dict[str, Any]) -> List[Optional[str]]:
     return [None]
 
 
+def _resolve_access_secret(json_cfg: Dict[str, Any]) -> str:
+    """Load the auth helper by file path so both launch layouts work.
+
+    The service runs both as the ``overstats`` package and with the project
+    root on ``sys.path``, and this module is imported before either is set up.
+    """
+    import importlib.util
+
+    module_path = _PROJECT_ROOT / "src" / "http_server" / "auth.py"
+    spec = importlib.util.spec_from_file_location("_overstats_http_auth", module_path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load access-secret helper from {module_path}.")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.resolve_access_secret(json_cfg)
+
+
 def _resolve_asset_warmup(json_cfg: Dict[str, Any]) -> bool:
     if os.getenv("OVERSTATS_DISABLE_ASSET_WARMUP") == "1":
         return False
@@ -255,7 +272,8 @@ def load_all_configs() -> Dict[str, Any]:
         "SHOW_DASHEN_PROMO": _get_bool(json_cfg, "SHOW_DASHEN_PROMO", False),
         "HERO_MODULE_MODE": _get_int(json_cfg, "HERO_MODULE_MODE", 0),
         "ENABLE_ASSET_WARMUP": _resolve_asset_warmup(json_cfg),
-
+        # Shared secret guarding every route except /healthz; empty disables it.
+        "ACCESS_SECRET": _resolve_access_secret(json_cfg),
         # Dashen Upstream
         "DASHEN_ACCOUNTS": accounts,
         "DASHEN_DTS": _get_int(json_cfg, "DASHEN_DTS", 2026),

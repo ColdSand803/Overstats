@@ -574,6 +574,8 @@
         headers: {
           "Content-Type": "application/json; charset=utf-8",
         },
+        // Send the credentials entered at the browser's login prompt, if any.
+        credentials: "same-origin",
         body: JSON.stringify(payload),
       });
       const contentType = String(response.headers.get("Content-Type") || "").toLowerCase();
