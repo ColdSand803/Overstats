@@ -11,9 +11,10 @@
       <aside class="sidebar">
         <div class="sidebar-head">
           <p class="eyebrow">Overstats</p>
-          <h1>网页控制面板</h1>
-          <p class="sidebar-copy">请先在左侧选择模块，然后在右侧查看 JSON、图片以及比赛详情回复包。</p>
+          <h1>控制台</h1>
+          <p class="sidebar-copy">选择模块，发送请求，在右侧查看 JSON、图片和回复。</p>
         </div>
+        <input id="moduleSearch" class="search-input" type="search" placeholder="搜索模块" autocomplete="off" />
         <nav id="moduleNav" class="module-nav" aria-label="模块列表"></nav>
       </aside>
 
@@ -26,15 +27,18 @@
           </div>
           <div class="endpoint-card">
             <span class="endpoint-label">接口地址</span>
-            <code id="activeEndpoint">/api/v2/...</code>
+            <div class="endpoint-row">
+              <code id="activeEndpoint">/api/v2/...</code>
+              <button id="copyEndpointButton" class="copy-btn" type="button">复制</button>
+            </div>
           </div>
         </section>
 
         <section class="grid">
           <div class="panel request-panel">
             <div class="panel-head">
-              <h3>请求表单</h3>
-              <button id="resetJsonButton" class="ghost-button" type="button">根据表单重置 JSON</button>
+              <h3>请求</h3>
+              <button id="resetJsonButton" class="ghost-button" type="button">重置 JSON</button>
             </div>
 
             <form id="requestForm" class="request-form">
@@ -57,13 +61,7 @@
 
                 <label id="targetValueField" class="field field-span-2">
                   <span>目标值</span>
-                  <input
-                    id="targetValueInput"
-                    name="target_value"
-                    type="text"
-                    placeholder="示例：Player#12345"
-                    autocomplete="off"
-                  />
+                  <input id="targetValueInput" name="target_value" type="text" placeholder="示例：Player#12345" autocomplete="off" />
                 </label>
               </div>
 
@@ -71,12 +69,7 @@
 
               <label class="field field-block">
                 <span>原始 JSON 覆盖</span>
-                <textarea
-                  id="payloadEditor"
-                  name="payload_editor"
-                  rows="14"
-                  spellcheck="false"
-                ></textarea>
+                <textarea id="payloadEditor" class="code-editor" name="payload_editor" rows="14" spellcheck="false"></textarea>
               </label>
 
               <div class="actions">
@@ -88,35 +81,33 @@
 
           <div class="panel preview-panel">
             <div class="panel-head">
-              <h3>结果预览</h3>
+              <div class="tabs" role="tablist">
+                <button id="tabJson" class="tab-btn is-active" type="button" data-tab="json">JSON</button>
+                <button id="tabImage" class="tab-btn" type="button" data-tab="image">图片</button>
+                <button id="tabReply" class="tab-btn" type="button" data-tab="reply">回复</button>
+              </div>
               <span id="responseMeta" class="response-meta">暂未发送请求</span>
             </div>
 
             <div class="preview-stack">
-              <section class="preview-card">
-                <div class="preview-head">
-                  <h4>JSON 预览</h4>
-                </div>
+              <section id="panelJson" class="preview-card tab-panel is-active">
                 <pre id="jsonPreview" class="preview-code">{
   "hint": "请选择模块并发送请求"
 }</pre>
               </section>
 
-              <section class="preview-card">
-                <div class="preview-head">
-                  <h4>图片预览</h4>
-                </div>
+              <section id="panelImage" class="preview-card tab-panel">
                 <div id="patchNavigation" class="patch-navigation hidden" aria-label="补丁阅读导航"></div>
                 <div id="imagePlaceholder" class="image-placeholder">图片响应会显示在这里。</div>
                 <img id="imagePreview" class="image-preview hidden" alt="API 图片预览" />
               </section>
 
-              <section class="preview-card">
+              <section id="panelReply" class="preview-card tab-panel">
                 <div class="preview-head">
                   <h4>回复预览</h4>
                   <span id="replyMeta" class="response-meta">适用于 OW 猜一猜和其他 replies 接口</span>
                 </div>
-                <div id="replyPlaceholder" class="image-placeholder">当 JSON 响应包含 replies 内容时，文字、图片或音频题面，以及详情面板等回复内容会显示在这里。</div>
+                <div id="replyPlaceholder" class="image-placeholder">当 JSON 响应包含 replies 内容时，文字、图片或音频会显示在这里。</div>
                 <div id="replyPreview" class="reply-preview hidden"></div>
               </section>
             </div>

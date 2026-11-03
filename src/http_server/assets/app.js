@@ -21,10 +21,13 @@
     rawDirty: false,
     imageObjectUrl: "",
     replyObjectUrls: [],
+    searchQuery: "",
   };
 
   const elements = {
     moduleNav: document.getElementById("moduleNav"),
+    moduleSearch: document.getElementById("moduleSearch"),
+    copyEndpointButton: document.getElementById("copyEndpointButton"),
     moduleTitle: document.getElementById("moduleTitle"),
     moduleDescription: document.getElementById("moduleDescription"),
     activeEndpoint: document.getElementById("activeEndpoint"),
@@ -47,6 +50,12 @@
     replyPreview: document.getElementById("replyPreview"),
     replyPlaceholder: document.getElementById("replyPlaceholder"),
     replyMeta: document.getElementById("replyMeta"),
+    tabJson: document.getElementById("tabJson"),
+    tabImage: document.getElementById("tabImage"),
+    tabReply: document.getElementById("tabReply"),
+    panelJson: document.getElementById("panelJson"),
+    panelImage: document.getElementById("panelImage"),
+    panelReply: document.getElementById("panelReply"),
   };
 
   function getActiveModule() {
@@ -124,12 +133,26 @@
     setReplyMeta("Available for OW guess and other reply bundle modules");
   }
 
+  function switchTab(name) {
+    const tabs = [
+      ["json", elements.tabJson, elements.panelJson],
+      ["image", elements.tabImage, elements.panelImage],
+      ["reply", elements.tabReply, elements.panelReply],
+    ];
+    tabs.forEach(function (item) {
+      const active = item[0] === name;
+      if (item[1]) item[1].classList.toggle("is-active", active);
+      if (item[2]) item[2].classList.toggle("is-active", active);
+    });
+  }
+
   function showImagePreview(blob) {
     clearImagePreview();
     state.imageObjectUrl = URL.createObjectURL(blob);
     elements.imagePreview.src = state.imageObjectUrl;
     elements.imagePreview.classList.remove("hidden");
     elements.imagePlaceholder.classList.add("hidden");
+    switchTab("image");
   }
 
   function sanitizePreviewData(value, key) {
@@ -316,16 +339,29 @@
 
     elements.replyPreview.classList.remove("hidden");
     elements.replyPlaceholder.classList.add("hidden");
-    setReplyMeta("Expanded " + displayReplies.length + " replies");
+    setReplyMeta("已展开 " + displayReplies.length + " 条回复");
+    switchTab("reply");
   }
 
   function renderModuleNav() {
     elements.moduleNav.innerHTML = "";
-    modules.forEach((item) => {
+    const query = String(state.searchQuery || "").trim().toLowerCase();
+    const visible = modules.filter(function (item) {
+      if (!query) return true;
+      return (item.title + " " + item.description + " " + item.id).toLowerCase().indexOf(query) >= 0;
+    });
+    if (!visible.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-nav";
+      empty.textContent = "没有匹配的模块";
+      elements.moduleNav.appendChild(empty);
+      return;
+    }
+    visible.forEach((item) => {
       const button = document.createElement("button");
       button.type = "button";
       button.className = "module-button" + (item.id === state.activeModuleId ? " is-active" : "");
-      button.innerHTML = "<strong>" + escapeHtml(item.title) + "</strong><span>" + escapeHtml(item.description) + "</span>";
+      button.innerHTML = "<strong><span>" + escapeHtml(item.title) + "</span><span class=\"module-badge-tag\">POST</span></strong><span>" + escapeHtml(item.description) + "</span>";
       button.addEventListener("click", function () {
         if (state.activeModuleId === item.id) {
           return;
@@ -348,26 +384,31 @@
     }
 
     activeModule.fields.forEach((field) => {
+      const isCheckbox = field.control_type === "checkbox";
+      const isWide = field.control_type === "textarea";
       const label = document.createElement("label");
-      label.className = "field";
+      label.className = "field" + (isCheckbox ? " checkbox-field" : "") + (isWide ? " field-span-2" : "");
 
       const title = document.createElement("span");
+      title.className = "field-label";
       title.textContent = field.label;
-      label.appendChild(title);
 
       let control;
-      if (field.control_type === "checkbox") {
+      if (isCheckbox) {
         control = document.createElement("input");
         control.type = "checkbox";
+        control.className = "ui-checkbox";
         control.checked = Boolean(field.default);
       } else if (field.control_type === "textarea") {
         control = document.createElement("textarea");
+        control.className = "ui-textarea";
         control.rows = 5;
         control.maxLength = 32768;
         control.placeholder = field.placeholder || "";
         control.value = String(field.default || "");
       } else if (field.control_type === "select") {
         control = document.createElement("select");
+        control.className = "ui-select";
         field.options.forEach((option) => {
           const optionNode = document.createElement("option");
           optionNode.value = option.value;
@@ -379,6 +420,7 @@
         });
       } else {
         control = document.createElement("input");
+        control.className = "ui-input";
         control.type = field.control_type === "number" ? "number" : (field.control_type === "password" ? "password" : "text");
         if (field.control_type === "password") control.autocomplete = "off";
         control.placeholder = field.placeholder || "";
@@ -389,7 +431,13 @@
       control.dataset.payloadKey = field.payload_key;
       control.addEventListener("input", onBaseFieldChanged);
       control.addEventListener("change", onBaseFieldChanged);
-      label.appendChild(control);
+      if (isCheckbox) {
+        label.appendChild(control);
+        label.appendChild(title);
+      } else {
+        label.appendChild(title);
+        label.appendChild(control);
+      }
 
       if (field.help_text) {
         const hint = document.createElement("small");
@@ -616,6 +664,7 @@
       } else {
         clearReplyPreview();
         clearImagePreview();
+        switchTab("json");
       }
 
       if (response.ok) {
@@ -656,6 +705,25 @@
     setStatus("JSON reset from form");
   });
   elements.requestForm.addEventListener("submit", sendRequest);
+  if (elements.tabJson) elements.tabJson.addEventListener("click", function () { switchTab("json"); });
+  if (elements.tabImage) elements.tabImage.addEventListener("click", function () { switchTab("image"); });
+  if (elements.tabReply) elements.tabReply.addEventListener("click", function () { switchTab("reply"); });
+  if (elements.moduleSearch) {
+    elements.moduleSearch.addEventListener("input", function () {
+      state.searchQuery = elements.moduleSearch.value || "";
+      renderModuleNav();
+    });
+  }
+  if (elements.copyEndpointButton) {
+    elements.copyEndpointButton.addEventListener("click", function () {
+      const text = elements.activeEndpoint.textContent || "";
+      if (!text || !navigator.clipboard) return;
+      navigator.clipboard.writeText(text).then(function () {
+        elements.copyEndpointButton.textContent = "已复制";
+        setTimeout(function () { elements.copyEndpointButton.textContent = "复制"; }, 1200);
+      });
+    });
+  }
 
   render();
 })();
