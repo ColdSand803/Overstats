@@ -50,6 +50,7 @@
     replyPreview: document.getElementById("replyPreview"),
     replyPlaceholder: document.getElementById("replyPlaceholder"),
     replyMeta: document.getElementById("replyMeta"),
+    themeToggle: document.getElementById("themeToggle"),
     tabJson: document.getElementById("tabJson"),
     tabImage: document.getElementById("tabImage"),
     tabReply: document.getElementById("tabReply"),
@@ -722,6 +723,23 @@
         elements.copyEndpointButton.textContent = "已复制";
         setTimeout(function () { elements.copyEndpointButton.textContent = "复制"; }, 1200);
       });
+    });
+  }
+
+  function applyTheme(theme) {
+    var next = theme === "light" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("overstats-theme", next); } catch (error) {}
+    if (elements.themeToggle) {
+      elements.themeToggle.textContent = next === "light" ? "深色" : "浅色";
+      elements.themeToggle.setAttribute("aria-pressed", next === "light" ? "true" : "false");
+    }
+  }
+
+  applyTheme(document.documentElement.dataset.theme || "dark");
+  if (elements.themeToggle) {
+    elements.themeToggle.addEventListener("click", function () {
+      applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
     });
   }
 

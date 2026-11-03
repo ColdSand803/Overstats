@@ -5,13 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Overstats 控制面板</title>
     <link rel="stylesheet" href="/ui/app.css" />
+    <script>
+      (function () {
+        var saved = "";
+        try { saved = localStorage.getItem("overstats-theme") || ""; } catch (error) {}
+        document.documentElement.dataset.theme = saved === "light" ? "light" : "dark";
+      })();
+    </script>
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-head">
           <p class="eyebrow">Overstats</p>
-          <h1>控制台</h1>
+          <div class="sidebar-title-row">
+            <h1>控制台</h1>
+            <button id="themeToggle" class="theme-toggle" type="button">浅色</button>
+          </div>
           <p class="sidebar-copy">选择模块，发送请求，在右侧查看 JSON、图片和回复。</p>
         </div>
         <input id="moduleSearch" class="search-input" type="search" placeholder="搜索模块" autocomplete="off" />
